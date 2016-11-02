@@ -99,9 +99,6 @@ exports.sortBy = function (property, order) {
             if (first[property] > second[property]) {
                 return 1;
             }
-            if (first[property] < second[property]) {
-                return -1;
-            }
 
             return 0;
         });
