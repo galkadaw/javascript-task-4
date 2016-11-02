@@ -38,7 +38,7 @@ exports.query = function (collection) {
         return 0;
     })
         .forEach(function (query) {
-            copyCollection = query(copyCollection)
+            copyCollection = query(copyCollection);
         });
 
     return copyCollection;
@@ -67,6 +67,7 @@ exports.select = function () {
             }
 
         });
+
         return collectionNewFriends;
     };
 };
