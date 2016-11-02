@@ -23,8 +23,8 @@ var PRIORITY_OF_METHODS = {
 exports.query = function (collection) {
     var params = [].slice.call(arguments);
     var commands = params.slice(1);
-    if (collection === null || collection === undefined) {
-        return undefined;
+    if (collection === null) {
+        return null;
     }
     var copyCollection = collection.slice();
     commands.sort(function (first, second) {
@@ -119,12 +119,13 @@ exports.sortBy = function (property, order) {
 exports.format = function (property, formatter) {
 
     return function format(collection) {
-        if (formatter === undefined || formatter === null) {
-            return collection;
-        }
-
         return collection.map(function (index) {
-            index[property] = formatter(index[property]);
+            if (index.hasOwnProperty(property)) {
+                var indexClone = Object.assign({}, index);
+                indexClone[property] = formatter(index[property]);
+
+                return indexClone;
+            }
 
             return index;
         });
