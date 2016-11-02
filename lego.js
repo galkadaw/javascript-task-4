@@ -38,7 +38,7 @@ exports.query = function (collection) {
         return 0;
     })
         .forEach(function (query) {
-            copyCollection = query(copyCollection);
+            copyCollection = query(copyCollection)
         });
 
     return copyCollection;
@@ -53,7 +53,8 @@ exports.select = function () {
     var args = [].slice.call(arguments);
 
     return function select(collection) {
-        return collection.map(function (index) {
+        var collectionNewFriends = [];
+        collection.forEach(function (index) {
             var newFriend = {};
             for (var key in index) {
                 if (index.hasOwnProperty(key) && args.indexOf(key) !== -1) {
@@ -61,8 +62,12 @@ exports.select = function () {
                 }
             }
 
-            return newFriend;
+            if (Object.keys(newFriend).length !== 0) {
+                collectionNewFriends.push(newFriend);
+            }
+
         });
+        return collectionNewFriends;
     };
 };
 
