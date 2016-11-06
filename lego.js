@@ -7,11 +7,11 @@
 exports.isStar = false;
 
 var PRIORITY_OF_METHODS = {
-    'select': 1,
+    'select': 2,
     'filterIn': 0,
-    'sortBy': 0,
-    'format': 2,
-    'limit': 2
+    'sortBy': 1,
+    'format': 3,
+    'limit': 3
 };
 
 /**
@@ -21,8 +21,7 @@ var PRIORITY_OF_METHODS = {
  * @returns {Array}
  */
 exports.query = function (collection) {
-    var params = [].slice.call(arguments);
-    var commands = params.slice(1);
+    var commands = [].slice.call(arguments, 1);
     if (collection === null) {
         return null;
     }
@@ -50,15 +49,15 @@ exports.query = function (collection) {
  * @returns {Function}
  */
 exports.select = function () {
-    var args = [].slice.call(arguments);
+    var fields = [].slice.call(arguments);
 
     return function select(collection) {
         var collectionNewFriends = [];
-        collection.forEach(function (index) {
+        collection.forEach(function (item) {
             var newFriend = {};
-            for (var key in index) {
-                if (index.hasOwnProperty(key) && args.indexOf(key) !== -1) {
-                    newFriend[key] = index[key];
+            for (var key in item) {
+                if (item.hasOwnProperty(key) && fields.indexOf(key) !== -1) {
+                    newFriend[key] = item[key];
                 }
             }
 
@@ -99,6 +98,9 @@ exports.sortBy = function (property, order) {
             if (first[property] > second[property]) {
                 return 1;
             }
+            if (first[property] < second[property]) {
+                return -1;
+            }
 
             return 0;
         });
@@ -119,15 +121,15 @@ exports.sortBy = function (property, order) {
 exports.format = function (property, formatter) {
 
     return function format(collection) {
-        return collection.map(function (index) {
-            if (index.hasOwnProperty(property)) {
-                var indexClone = Object.assign({}, index);
-                indexClone[property] = formatter(index[property]);
+        return collection.map(function (item) {
+            if (item.hasOwnProperty(property)) {
+                var itemClone = copyItem(item);
+                itemClone[property] = formatter(item[property]);
 
-                return indexClone;
+                return itemClone;
             }
 
-            return index;
+            return item;
         });
     };
 };
@@ -167,4 +169,14 @@ if (exports.isStar) {
     exports.and = function () {
         return;
     };
+}
+function copyItem(item) {
+    var cloneItem = {};
+    for (var key in item) {
+        if (item.hasOwnProperty(key)) {
+            cloneItem[key] = item[key];
+        }
+    }
+
+    return cloneItem;
 }
