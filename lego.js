@@ -22,9 +22,8 @@ var PRIORITY_OF_COMMANDS = {
  */
 exports.query = function (collection) {
     var commands = [].slice.call(arguments, 1);
-    var copyCollection = [];
-    collection.forEach(function (item) {
-        copyCollection.push(copyItem(item));
+    var copyCollection = collection.map(function (item) {
+        return copyItem(item);
     });
 
     return commands
@@ -55,8 +54,8 @@ exports.select = function () {
 
     return function select(collection) {
         return collection.map(function (item) {
-            return Object.keys(item).reduce(function (newFriend, field) {
-                if (item.hasOwnProperty(field) && fields.indexOf(field) !== -1) {
+            return fields.reduce(function (newFriend, field) {
+                if (item.hasOwnProperty(field)) {
                     newFriend[field] = item[field];
                 }
 
@@ -161,9 +160,7 @@ if (exports.isStar) {
 
 function copyItem(item) {
     return Object.keys(item).reduce(function (cloneItem, field) {
-        if (item.hasOwnProperty(field)) {
-            cloneItem[field] = item[field];
-        }
+        cloneItem[field] = item[field];
 
         return cloneItem;
     }, {});
