@@ -6,12 +6,12 @@
  */
 exports.isStar = false;
 
-var PRIORITY_OF_METHODS = {
-    'select': 2,
+var PRIORITY_OF_COMMANDS = {
+    'select': 3,
     'filterIn': 0,
     'sortBy': 1,
-    'format': 3,
-    'limit': 3
+    'format': 4,
+    'limit': 2
 };
 
 /**
@@ -22,25 +22,27 @@ var PRIORITY_OF_METHODS = {
  */
 exports.query = function (collection) {
     var commands = [].slice.call(arguments, 1);
-    if (collection === null) {
-        return null;
-    }
-    var copyCollection = collection.slice();
-    commands.sort(function (first, second) {
-        if (PRIORITY_OF_METHODS[first.name] > PRIORITY_OF_METHODS[second.name]) {
-            return 1;
-        }
-        if (PRIORITY_OF_METHODS[second.name] > PRIORITY_OF_METHODS[first.name]) {
-            return -1;
-        }
+    var copyCollection = [];
+    collection.forEach(function (item) {
+        copyCollection.push(copyItem(item));
+    });
 
-        return 0;
-    })
-        .forEach(function (query) {
-            copyCollection = query(copyCollection);
-        });
+    return commands
+        .sort(function (first, second) {
+            var firstCommand = PRIORITY_OF_COMMANDS[first.name];
+            var secondCommand = PRIORITY_OF_COMMANDS[second.name];
+            if (firstCommand > secondCommand) {
+                return 1;
+            }
+            if (secondCommand > firstCommand) {
+                return -1;
+            }
 
-    return copyCollection;
+            return 0;
+        })
+        .reduce(function (queryResult, query) {
+            return query(queryResult);
+        }, copyCollection);
 };
 
 /**
@@ -52,22 +54,16 @@ exports.select = function () {
     var fields = [].slice.call(arguments);
 
     return function select(collection) {
-        var collectionNewFriends = [];
-        collection.forEach(function (item) {
-            var newFriend = {};
-            for (var key in item) {
-                if (item.hasOwnProperty(key) && fields.indexOf(key) !== -1) {
-                    newFriend[key] = item[key];
+        return collection.map(function (item) {
+            return Object.keys(item).reduce(function (newFriend, field) {
+                if (item.hasOwnProperty(field) && fields.indexOf(field) !== -1) {
+                    newFriend[field] = item[field];
                 }
-            }
 
-            if (Object.keys(newFriend).length !== 0) {
-                collectionNewFriends.push(newFriend);
-            }
+                return newFriend;
+            }, {});
 
         });
-
-        return collectionNewFriends;
     };
 };
 
@@ -94,21 +90,16 @@ exports.filterIn = function (property, values) {
  */
 exports.sortBy = function (property, order) {
     return function sortBy(collection) {
-        var newCollection = collection.sort(function (first, second) {
+        return collection.sort(function (first, second) {
             if (first[property] > second[property]) {
-                return 1;
+                return (order === 'desc') ? -1 : 1;
             }
             if (first[property] < second[property]) {
-                return -1;
+                return (order === 'desc') ? 1 : -1;
             }
 
             return 0;
         });
-        if (order === 'desc') {
-            newCollection.reverse();
-        }
-
-        return newCollection;
     };
 };
 
@@ -123,10 +114,7 @@ exports.format = function (property, formatter) {
     return function format(collection) {
         return collection.map(function (item) {
             if (item.hasOwnProperty(property)) {
-                var itemClone = copyItem(item);
-                itemClone[property] = formatter(item[property]);
-
-                return itemClone;
+                item[property] = formatter(item[property]);
             }
 
             return item;
@@ -170,13 +158,13 @@ if (exports.isStar) {
         return;
     };
 }
-function copyItem(item) {
-    var cloneItem = {};
-    for (var key in item) {
-        if (item.hasOwnProperty(key)) {
-            cloneItem[key] = item[key];
-        }
-    }
 
-    return cloneItem;
+function copyItem(item) {
+    return Object.keys(item).reduce(function (cloneItem, field) {
+        if (item.hasOwnProperty(field)) {
+            cloneItem[field] = item[field];
+        }
+
+        return cloneItem;
+    }, {});
 }
